@@ -1,5 +1,6 @@
 -- TechIt Database - Schema + Fake Data
-
+CREATE DATABASE IF NOT EXISTS TechIt;
+USE TechIt;
 -- Drop tables for rerun
 DROP TABLE IF EXISTS TAGS;
 DROP TABLE IF EXISTS MODERATES;
@@ -15,7 +16,7 @@ DROP TABLE IF EXISTS USER;
 
 -- USER
 -- -------------------------------
-CREATE TABLE USER (
+CREATE TABLE USERS (
     user_id INT UNSIGNED AUTO_INCREMENT,
     username VARCHAR(50) NOT NULL UNIQUE,
     f_name VARCHAR(50) NOT NULL,
@@ -48,7 +49,7 @@ CREATE TABLE POST (
     user_id INT UNSIGNED NOT NULL,
     PRIMARY KEY (post_id),
     FOREIGN KEY (subreddit_name) REFERENCES SUBREDDIT(subreddit_name),
-    FOREIGN KEY (user_id) REFERENCES USER(user_id)
+    FOREIGN KEY (user_id) REFERENCES USERS(user_id)
 );
 
 -- COMMENT
@@ -61,7 +62,7 @@ CREATE TABLE COMMENT (
     c_created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (comment_num, post_id),
     FOREIGN KEY (post_id) REFERENCES POST(post_id),
-    FOREIGN KEY (user_id) REFERENCES USER(user_id)
+    FOREIGN KEY (user_id) REFERENCES USERS(user_id)
 );
 
 -- MESSAGE
@@ -73,8 +74,8 @@ CREATE TABLE MESSAGE (
     content TEXT NOT NULL,
     sent_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (message_id),
-    FOREIGN KEY (sender_id) REFERENCES USER(user_id),
-    FOREIGN KEY (receiver_id) REFERENCES USER(user_id)
+    FOREIGN KEY (sender_id) REFERENCES USERS(user_id),
+    FOREIGN KEY (receiver_id) REFERENCES USERS(user_id)
 );
 
 -- CONTENT
@@ -115,7 +116,7 @@ CREATE TABLE VOTES_ON (
     vote_type ENUM('up','down') NOT NULL,
     vote_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, post_id),
-    FOREIGN KEY (user_id) REFERENCES USER(user_id),
+    FOREIGN KEY (user_id) REFERENCES USERS(user_id),
     FOREIGN KEY (post_id) REFERENCES POST(post_id)
 );
 
@@ -125,7 +126,7 @@ CREATE TABLE MODERATES (
     user_id INT UNSIGNED,
     subreddit_name VARCHAR(100),
     PRIMARY KEY (user_id, subreddit_name),
-    FOREIGN KEY (user_id) REFERENCES USER(user_id),
+    FOREIGN KEY (user_id) REFERENCES USERS(user_id),
     FOREIGN KEY (subreddit_name) REFERENCES SUBREDDIT(subreddit_name)
 );
 
@@ -142,7 +143,7 @@ CREATE TABLE TAGS (
 -- -------------------------------
 
 -- USERS
-INSERT INTO USER (username, f_name, l_name, email, password, phone_num, join_date, karma) VALUES
+INSERT INTO USERS (username, f_name, l_name, email, password, phone_num, join_date, karma) VALUES
 ('coderJay', 'Jaycob', 'Arsenal', 'jaycob@ttu.edu', 'hashed_pw1', '8061112222', '2023-10-08', 120),
 ('tech_girl', 'Emily', 'Stone', 'emily@ttu.edu', 'hashed_pw2', NULL, '2023-10-08', 85),
 ('debugKing', 'Marcus', 'Lee', 'marcus@ttu.edu', 'hashed_pw3', '8063334444', '2023-10-08', 200),
@@ -201,3 +202,119 @@ INSERT INTO TAGS (post_id, tag) VALUES
 (1, 'database'),
 (2, 'campus'),
 (3, 'sports');
+
+-- VIEWS
+
+-- All Posts from TTU_CS Subreddit
+CREATE VIEW TTU_CS_POSTS AS
+SELECT 
+    s.subreddit_name,
+    s.description,
+    s.creation_date,
+    p.post_id,
+    p.title,
+    p.p_created_at,
+    p.score,
+    p.user_id
+FROM SUBREDDIT s
+JOIN POST p ON s.subreddit_name = p.subreddit_name
+WHERE s.subreddit_name = 'TTU_CS';
+-- All Posts from ProgrammingHelp Subreddit
+CREATE VIEW TTU_PROG_POSTS AS
+SELECT 
+    s.subreddit_name,
+    s.description,
+    s.creation_date,
+    p.post_id,
+    p.title,
+    p.p_created_at,
+    p.score,
+    p.user_id
+FROM SUBREDDIT s
+JOIN POST p ON s.subreddit_name = p.subreddit_name
+WHERE s.subreddit_name = 'ProgrammingHelp';
+
+-- All Posts from RedRaiderSports Subreddit
+CREATE VIEW TTU_SPORTS_POSTS AS
+SELECT 
+    s.subreddit_name,
+    s.description,
+    s.creation_date,
+    p.post_id,
+    p.title,
+    p.p_created_at,
+    p.score,
+    p.user_id
+FROM SUBREDDIT s
+JOIN POST p ON s.subreddit_name = p.subreddit_name
+WHERE s.subreddit_name = 'RedRaiderSports';
+
+-- All Posts for admins to moderate over
+CREATE VIEW Admin_Post_Mod AS
+SELECT
+    u.user_id,
+    u.email,
+    p.post_id,
+    p.title
+FROM USERS u
+JOIN POST p ON u.user_id = p.user_id;
+
+-- All Comments for admins to moderate over
+CREATE VIEW Admin_Comment_Mod AS
+SELECT
+    u.user_id,
+    u.email,
+    p.post_id,
+    p.title,
+    c.comment_num,
+    c.text
+FROM USERS u
+JOIN POST p ON u.user_id = p.user_id
+JOIN COMMENT c ON p.post_id = c.post_id;
+
+-- Everything for admins to moderate over
+CREATE VIEW Admin_Mod AS
+SELECT 
+    user_id, 
+    email, 
+    post_id, 
+    title, 
+    NULL AS comment_num, 
+    NULL AS text, 
+    NULL AS message_id, 
+    NULL AS message_content
+FROM Admin_Post_Mod
+UNION
+SELECT 
+    user_id, 
+    email, 
+    post_id, 
+    title, 
+    comment_num, 
+    text, 
+    NULL, 
+    NULL
+FROM Admin_Comment_Mod
+UNION
+SELECT 
+    user_id, 
+    email, 
+    NULL, 
+    NULL, 
+    NULL, 
+    NULL, 
+    message_id, 
+    content
+FROM Admin_Message_Mod;
+
+-- QUERIES from my view
+Select * from TTU_CS_POSTS;
+Select * from TTU_PROG_POSTS;
+Select * from TTU_SPORTS_POSTS;
+Select * from Admin_Post_Mod;
+Select * from Admin_Comment_Mod;
+Select * from Admin_Message_Mod;
+Select * from Admin_Mod;
+
+-- Total score across all posts
+Select username, sum(score) as total_score FROM POST p left join USERS u on p.user_id = u.user_id group by p.user_id;
