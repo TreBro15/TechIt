@@ -12,9 +12,9 @@ DROP TABLE IF EXISTS MESSAGE;
 DROP TABLE IF EXISTS COMMENT;
 DROP TABLE IF EXISTS POST;
 DROP TABLE IF EXISTS SUBREDDIT;
-DROP TABLE IF EXISTS USER;
+DROP TABLE IF EXISTS USERS;
 
--- USER
+-- USERS
 -- -------------------------------
 CREATE TABLE USERS (
     user_id INT UNSIGNED AUTO_INCREMENT,
@@ -159,7 +159,8 @@ INSERT INTO SUBREDDIT (subreddit_name, description, creation_date) VALUES
 INSERT INTO POST (title, subreddit_name, user_id, score) VALUES
 ('How to learn SQL fast?', 'ProgrammingHelp', 1, 10),
 ('Best study spots on campus?', 'TTU_CS', 2, 5),
-('Game day hype!', 'RedRaiderSports', 3, 20);
+('Game day hype!', 'RedRaiderSports', 3, 20),
+('Difference between JOIN and UNION?', 'ProgrammingHelp', 2, 12);
 
 -- COMMENTS
 INSERT INTO COMMENT (comment_num, post_id, user_id, text) VALUES
@@ -204,7 +205,6 @@ INSERT INTO TAGS (post_id, tag) VALUES
 (3, 'sports');
 
 -- VIEWS
-
 -- All Posts from TTU_CS Subreddit
 CREATE VIEW TTU_CS_POSTS AS
 SELECT 
@@ -233,7 +233,6 @@ SELECT
 FROM SUBREDDIT s
 JOIN POST p ON s.subreddit_name = p.subreddit_name
 WHERE s.subreddit_name = 'ProgrammingHelp';
-
 -- All Posts from RedRaiderSports Subreddit
 CREATE VIEW TTU_SPORTS_POSTS AS
 SELECT 
@@ -248,7 +247,6 @@ SELECT
 FROM SUBREDDIT s
 JOIN POST p ON s.subreddit_name = p.subreddit_name
 WHERE s.subreddit_name = 'RedRaiderSports';
-
 -- All Posts for admins to moderate over
 CREATE VIEW Admin_Post_Mod AS
 SELECT
@@ -258,7 +256,6 @@ SELECT
     p.title
 FROM USERS u
 JOIN POST p ON u.user_id = p.user_id;
-
 -- All Comments for admins to moderate over
 CREATE VIEW Admin_Comment_Mod AS
 SELECT
@@ -271,7 +268,6 @@ SELECT
 FROM USERS u
 JOIN POST p ON u.user_id = p.user_id
 JOIN COMMENT c ON p.post_id = c.post_id;
-
 -- Everything for admins to moderate over
 CREATE VIEW Admin_Mod AS
 SELECT 
@@ -307,6 +303,9 @@ SELECT
     content
 FROM Admin_Message_Mod;
 
+-- All content that needs to be screened by admins
+CREATE VIEW ContentStream AS
+Select * From CONTENT;
 -- QUERIES from my view
 Select * from TTU_CS_POSTS;
 Select * from TTU_PROG_POSTS;
@@ -315,6 +314,12 @@ Select * from Admin_Post_Mod;
 Select * from Admin_Comment_Mod;
 Select * from Admin_Message_Mod;
 Select * from Admin_Mod;
-
+Select * from ContentStream;
 -- Total score across all posts
 Select username, sum(score) as total_score FROM POST p left join USERS u on p.user_id = u.user_id group by p.user_id;
+
+-- Moderaters of Subreddits
+Select CONCAT(f_name, " ", l_name) as Name, subreddit_name FROM Moderates m join USERS u where m.user_id = u.user_id;
+
+-- Top Post(s) across TechIt
+Select post_id, title, score From POST where score = (Select max(score) from POST);
