@@ -160,7 +160,8 @@ INSERT INTO POST (title, subreddit_name, user_id, score) VALUES
 ('How to learn SQL fast?', 'ProgrammingHelp', 1, 10),
 ('Best study spots on campus?', 'TTU_CS', 2, 5),
 ('Game day hype!', 'RedRaiderSports', 3, 20),
-('Difference between JOIN and UNION?', 'ProgrammingHelp', 2, 12);
+('Difference between JOIN and UNION?', 'ProgrammingHelp', 2, 12),
+('Jacob Rodriguez to the Dolphins!', 'RedRaiderSports', 4, 1100);
 
 -- COMMENTS
 INSERT INTO COMMENT (comment_num, post_id, user_id, text) VALUES
@@ -171,7 +172,9 @@ INSERT INTO COMMENT (comment_num, post_id, user_id, text) VALUES
 -- MESSAGES
 INSERT INTO MESSAGE (sender_id, receiver_id, content) VALUES
 (1, 2, 'Hey, need help with SQL?'),
-(2, 1, 'Yes please!');
+(2, 1, 'Yes please!'),
+(3, 4, 'Wanna be friends?'),
+(4, 3, 'No you''re weird');
 
 -- CONTENT
 INSERT INTO CONTENT (post_id, caption, file_size, url) VALUES
@@ -215,9 +218,12 @@ SELECT
     p.title,
     p.p_created_at,
     p.score,
-    p.user_id
+    p.user_id,
+    c.comment_num,
+    c.text
 FROM SUBREDDIT s
 JOIN POST p ON s.subreddit_name = p.subreddit_name
+left JOIN COMMENT c on c.post_id = p.post_id
 WHERE s.subreddit_name = 'TTU_CS';
 -- All Posts from ProgrammingHelp Subreddit
 CREATE VIEW TTU_PROG_POSTS AS
@@ -229,11 +235,15 @@ SELECT
     p.title,
     p.p_created_at,
     p.score,
-    p.user_id
+    p.user_id,
+    c.comment_num,
+    c.text
 FROM SUBREDDIT s
 JOIN POST p ON s.subreddit_name = p.subreddit_name
+left JOIN COMMENT c on c.post_id = p.post_id
 WHERE s.subreddit_name = 'ProgrammingHelp';
 -- All Posts from RedRaiderSports Subreddit
+DROP VIEW TTU_SPORTS_POSTS;
 CREATE VIEW TTU_SPORTS_POSTS AS
 SELECT 
     s.subreddit_name,
@@ -243,9 +253,12 @@ SELECT
     p.title,
     p.p_created_at,
     p.score,
-    p.user_id
+    p.user_id,
+    c.comment_num,
+    c.text
 FROM SUBREDDIT s
 JOIN POST p ON s.subreddit_name = p.subreddit_name
+left JOIN COMMENT c on c.post_id = p.post_id
 WHERE s.subreddit_name = 'RedRaiderSports';
 -- All Posts for admins to moderate over
 CREATE VIEW Admin_Post_Mod AS
@@ -310,10 +323,8 @@ Select * From CONTENT;
 Select * from TTU_CS_POSTS;
 Select * from TTU_PROG_POSTS;
 Select * from TTU_SPORTS_POSTS;
-Select * from Admin_Post_Mod;
-Select * from Admin_Comment_Mod;
-Select * from Admin_Message_Mod;
-Select * from Admin_Mod;
+Select post_id, title from POST;
+Select * from Admin_Mod order by post_id;
 Select * from ContentStream;
 -- Total score across all posts
 Select username, sum(score) as total_score FROM POST p left join USERS u on p.user_id = u.user_id group by p.user_id;
@@ -323,3 +334,6 @@ Select CONCAT(f_name, " ", l_name) as Name, subreddit_name FROM Moderates m join
 
 -- Top Post(s) across TechIt
 Select post_id, title, score From POST where score = (Select max(score) from POST);
+
+-- UPDATES
+UPDATE USERS SET username = 'TeaDog' where username = 'noobMaster';
