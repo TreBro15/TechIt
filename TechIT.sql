@@ -209,7 +209,8 @@ INSERT INTO POST (title, p_created_at, score, subreddit_name, user_id) VALUES
 ('Best laptops for CS students', '2022-11-30 14:50:00', 70, 'TTU_CS', 21),
 ('Python tricks you should know', '2024-03-05 16:40:00', 180, 'ProgrammingHelp', 22),
 ('Big 12 predictions this season', '2023-09-01 12:00:00', 300, 'RedRaiderSports', 23),
-('Debugging segmentation faults', '2022-12-12 10:10:00', 65, 'CPlusPlusCorner', 24);
+('Debugging segmentation faults', '2022-12-12 10:10:00', 65, 'CPlusPlusCorner', 24),
+('How do you add content to your post?', '2023-09-01 12:00:00', 4, 'TTU_CS', 1);
 
 -- COMMENTS
 INSERT INTO COMMENT (comment_num, post_id, user_id, text, c_created_at) VALUES
@@ -242,7 +243,8 @@ INSERT INTO COMMENT (comment_num, post_id, user_id, text, c_created_at) VALUES
 (1, 13, 3, 'Frontend is more design heavy.', '2024-01-10 17:50:00'),
 (2, 13, 4, 'Backend is logic heavy.', '2024-01-10 17:55:00'),
 (1, 14, 5, 'Full stack gives best flexibility.', '2023-05-18 12:15:00'),
-(2, 14, 6, 'Pick what you enjoy more.', '2023-05-18 12:20:00');
+(2, 14, 6, 'Pick what you enjoy more.', '2023-05-18 12:20:00'),
+(5, 2, 3, 'Wow you !@?! can''t code?', '2024-04-28 16:07:00');
 
 -- MESSAGES
 INSERT INTO MESSAGE (sender_id, receiver_id, content, sent_time) VALUES
@@ -613,13 +615,32 @@ FROM Admin_Message_Mod;
 -- All content that needs to be screened by admins
 CREATE VIEW ContentStream AS
 Select * From CONTENT;
--- QUERIES from my view
+
+-- User (Student) Main Feed
+CREATE VIEW USER_POST_FEED AS
+Select 
+*
+FROM TTU_CS_POSTS
+UNION ALL
+Select 
+*
+FROM TTU_PROG_POSTS
+UNION ALL
+Select 
+*
+FROM TTU_SPORTS_POSTS;
+-- QUERIES from my views
 Select * from TTU_CS_POSTS;
 Select * from TTU_PROG_POSTS;
 Select * from TTU_SPORTS_POSTS;
 Select post_id, title from POST;
 Select * from Admin_Mod order by post_id;
 Select * from ContentStream;
+Select * from USER_POST_FEED;
+
+-- QUERIES
+-- _____________________________________________
+
 -- Total score across all posts
 Select username, sum(score) as total_score FROM POST p left join USERS u on p.user_id = u.user_id group by p.user_id;
 
@@ -632,8 +653,8 @@ Select post_id, title, score From POST where score = (Select max(score) from POS
 -- UPDATES
 UPDATE USERS SET username = 'TeaDog' where username = 'noobMaster';
 
--- QUERIES
--- _____________________________________________
+-- Finding comments with explicatives (using LIKE())
+SELECT comment_num, text FROM comment where text LIKE '%!@?!%';
 
 -- join
 SELECT u.username, p.title
@@ -660,6 +681,19 @@ HAVING COUNT(p.post_id) >= 5;
 SELECT post_id, title, score
 FROM POST
 WHERE score > (SELECT AVG(score) FROM POST);
+
+-- Posts from a certain user (tech_girl)
+Select post_id, title
+FROM Post
+Where user_id = 
+(SELECT user_id 
+FROM USERS
+WHERE username = 'tech_girl');
+-- Posts with multiple tags
+SELECT p.post_id, p.title, group_concat(t.tag) as tags
+FROM POST p NATURAL JOIN TAGS t
+GROUP BY p.post_id
+HAVING count(t.tag) > 1;
 
 -- moderation
 SELECT c.comment_num, c.text, p.title, u.username
@@ -690,4 +724,16 @@ LEFT JOIN COMMENT c ON p.post_id = c.post_id
 WHERE p.score > 50
 ORDER BY p.score DESC
 LIMIT 10;
+
+-- Shows posts with their content, only posts with content in this scenario
+Select p.post_id, p.title, c.caption, c.url
+FROM post p
+JOIN content c on p.post_id = c.post_id;
+
+-- Show posts and any content they have included even if content is null
+Select p.post_id, p.title, c.caption, c.url
+From post p left join content c on p.post_id = c.post_id;
+
+-- DELETIONS (Only run if testing functionality)
+DELETE FROM post WHERE post_id = 1;
 
