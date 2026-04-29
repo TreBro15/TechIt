@@ -474,6 +474,16 @@ INSERT INTO TAGS (post_id, tag) VALUES
 (15, 'projects');
 
 -- VIEWS
+
+DROP VIEW IF EXISTS ContentStream;
+DROP VIEW IF EXISTS TTU_CS_POSTS;
+DROP VIEW IF EXISTS TTU_PROG_POSTS;
+DROP VIEW IF EXISTS Admin_Mod;
+DROP VIEW IF EXISTS Admin_Comment_Mod;
+DROP VIEW IF EXISTS TTU_SPORTS_POSTS;
+DROP VIEW IF EXISTS Admin_Post_Mod;
+DROP VIEW IF EXISTS Admin_Message_Mod;
+
 -- All Posts from TTU_CS Subreddit
 CREATE VIEW TTU_CS_POSTS AS
 SELECT 
@@ -492,6 +502,7 @@ JOIN POST p ON s.subreddit_name = p.subreddit_name
 left JOIN COMMENT c on c.post_id = p.post_id
 WHERE s.subreddit_name = 'TTU_CS';
 -- All Posts from ProgrammingHelp Subreddit
+
 CREATE VIEW TTU_PROG_POSTS AS
 SELECT 
     s.subreddit_name,
@@ -508,8 +519,9 @@ FROM SUBREDDIT s
 JOIN POST p ON s.subreddit_name = p.subreddit_name
 left JOIN COMMENT c on c.post_id = p.post_id
 WHERE s.subreddit_name = 'ProgrammingHelp';
+
 -- All Posts from RedRaiderSports Subreddit
-DROP VIEW TTU_SPORTS_POSTS;
+
 CREATE VIEW TTU_SPORTS_POSTS AS
 SELECT 
     s.subreddit_name,
@@ -527,6 +539,8 @@ JOIN POST p ON s.subreddit_name = p.subreddit_name
 left JOIN COMMENT c on c.post_id = p.post_id
 WHERE s.subreddit_name = 'RedRaiderSports';
 -- All Posts for admins to moderate over
+
+
 CREATE VIEW Admin_Post_Mod AS
 SELECT
     u.user_id,
@@ -536,6 +550,8 @@ SELECT
 FROM USERS u
 JOIN POST p ON u.user_id = p.user_id;
 -- All Comments for admins to moderate over
+
+
 CREATE VIEW Admin_Comment_Mod AS
 SELECT
     u.user_id,
@@ -548,6 +564,18 @@ FROM USERS u
 JOIN POST p ON u.user_id = p.user_id
 JOIN COMMENT c ON p.post_id = c.post_id;
 -- Everything for admins to moderate over
+
+CREATE VIEW Admin_Message_Mod AS
+SELECT
+    u.user_id,
+    u.email,
+    m.message_id,
+    m.content,
+    m.sent_time,
+    m.receiver_id
+FROM USERS u
+JOIN MESSAGE m ON u.user_id = m.sender_id;
+
 CREATE VIEW Admin_Mod AS
 SELECT 
     user_id, 
@@ -603,3 +631,63 @@ Select post_id, title, score From POST where score = (Select max(score) from POS
 
 -- UPDATES
 UPDATE USERS SET username = 'TeaDog' where username = 'noobMaster';
+
+-- QUERIES
+-- _____________________________________________
+
+-- join
+SELECT u.username, p.title
+FROM USERS u
+JOIN POST p ON u.user_id = p.user_id;
+
+-- aggregate
+SELECT s.subreddit_name,
+       COUNT(p.post_id) AS total_posts,
+       AVG(p.score) AS avg_score
+FROM SUBREDDIT s
+JOIN POST p ON s.subreddit_name = p.subreddit_name
+GROUP BY s.subreddit_name;
+
+-- Having
+SELECT s.subreddit_name,
+       COUNT(p.post_id) AS total_posts
+FROM SUBREDDIT s
+JOIN POST p ON s.subreddit_name = p.subreddit_name
+GROUP BY s.subreddit_name
+HAVING COUNT(p.post_id) >= 5;
+
+-- nested
+SELECT post_id, title, score
+FROM POST
+WHERE score > (SELECT AVG(score) FROM POST);
+
+-- moderation
+SELECT c.comment_num, c.text, p.title, u.username
+FROM COMMENT c
+JOIN POST p ON c.post_id = p.post_id
+JOIN USERS u ON c.user_id = u.user_id;
+
+-- Shows all subreddits (including empty ones), sorted by activity
+SELECT s.subreddit_name,
+       COUNT(p.post_id) AS total_posts
+FROM SUBREDDIT s
+LEFT JOIN POST p ON s.subreddit_name = p.subreddit_name
+GROUP BY s.subreddit_name
+ORDER BY total_posts DESC
+LIMIT 5;
+
+-- Shows unique users who have posted, filtered by karma
+SELECT DISTINCT u.username, u.karma
+FROM USERS u
+JOIN POST p ON u.user_id = p.user_id
+WHERE u.karma > 100
+ORDER BY u.karma DESC;
+
+-- Shows posts with or without comments, prioritizing highest score
+SELECT p.post_id, p.title, p.score, c.text
+FROM POST p
+LEFT JOIN COMMENT c ON p.post_id = c.post_id
+WHERE p.score > 50
+ORDER BY p.score DESC
+LIMIT 10;
+
