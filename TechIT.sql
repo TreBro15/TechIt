@@ -11,6 +11,9 @@ DROP TABLE IF EXISTS CONTENT;
 DROP TABLE IF EXISTS MESSAGE;
 DROP TABLE IF EXISTS COMMENT;
 DROP TABLE IF EXISTS POST;
+DROP TABLE IF EXISTS ADMIN;
+DROP TABLE IF EXISTS M_MOD_OF_SUB;
+DROP TABLE IF EXISTS MODERATOR;
 DROP TABLE IF EXISTS SUBREDDIT;
 DROP TABLE IF EXISTS USERS;
 
@@ -29,6 +32,23 @@ CREATE TABLE USERS (
     PRIMARY KEY (user_id)
 );
 
+-- ADMIN
+-- -------------------------------
+CREATE TABLE ADMIN (
+    user_id INT UNSIGNED,
+    department VARCHAR(100) NOT NULL,
+    PRIMARY KEY (user_id),
+    FOREIGN KEY (user_id) REFERENCES USERS(user_id)
+);
+
+-- MODERATOR
+-- -------------------------------
+CREATE TABLE MODERATOR (
+    user_id INT UNSIGNED,
+    PRIMARY KEY (user_id),
+    FOREIGN KEY (user_id) REFERENCES USERS(user_id)
+);
+
 -- SUBREDDIT
 -- -------------------------------
 CREATE TABLE SUBREDDIT (
@@ -36,6 +56,17 @@ CREATE TABLE SUBREDDIT (
     description TEXT,
     creation_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (subreddit_name)
+);
+
+-- M_MOD_OF_SUB
+-- Multivalued attribute for moderator
+-- -------------------------------
+CREATE TABLE M_MOD_OF_SUB (
+    user_id INT UNSIGNED,
+    mod_of_subreddit VARCHAR(100),
+    PRIMARY KEY (user_id, mod_of_subreddit),
+    FOREIGN KEY (user_id) REFERENCES MODERATOR(user_id),
+    FOREIGN KEY (mod_of_subreddit) REFERENCES SUBREDDIT(subreddit_name)
 );
 
 -- POST
@@ -475,6 +506,75 @@ INSERT INTO TAGS (post_id, tag) VALUES
 (15, 'ML'),
 (15, 'projects');
 
+-- ADMINS
+INSERT INTO ADMIN (user_id, department) VALUES
+(1, 'Platform Security'),
+(2, 'Community Management'),
+(3, 'User Support'),
+(4, 'Content Review'),
+(5, 'Database Administration'),
+(6, 'AI Moderation'),
+(7, 'Cybersecurity'),
+(8, 'Infrastructure'),
+(9, 'Developer Relations'),
+(10, 'Platform Analytics'),
+(11, 'Spam Prevention'),
+(12, 'Trust and Safety'),
+(13, 'Backend Systems'),
+(14, 'Frontend Systems'),
+(15, 'Network Operations'),
+(16, 'Content Policy'),
+(17, 'Community Outreach'),
+(18, 'System Monitoring'),
+(19, 'Platform Security'),
+(20, 'Technical Support');
+
+-- MODERATOR
+INSERT INTO MODERATOR (user_id) VALUES
+(1),
+(2),
+(3),
+(4),
+(5),
+(6),
+(7),
+(8),
+(9),
+(10),
+(11),
+(12),
+(13),
+(14),
+(15),
+(16),
+(17),
+(18),
+(19),
+(20);
+
+-- M_MOD_OF_SUB
+INSERT INTO M_MOD_OF_SUB (user_id, mod_of_subreddit) VALUES
+(1, 'TTU_CS'),
+(2, 'ProgrammingHelp'),
+(3, 'RedRaiderSports'),
+(4, 'DataScienceHub'),
+(5, 'WebDevWorld'),
+(6, 'JavaNation'),
+(7, 'CPlusPlusCorner'),
+(8, 'AI_Research'),
+(9, 'CyberSecurityTalk'),
+(10, 'StudentLifeTTU'),
+(11, 'TTU_CS'),
+(12, 'ProgrammingHelp'),
+(13, 'RedRaiderSports'),
+(14, 'DataScienceHub'),
+(15, 'WebDevWorld'),
+(16, 'JavaNation'),
+(17, 'CPlusPlusCorner'),
+(18, 'AI_Research'),
+(19, 'CyberSecurityTalk'),
+(20, 'StudentLifeTTU');
+
 -- VIEWS
 
 DROP VIEW IF EXISTS ContentStream;
@@ -735,5 +835,5 @@ Select p.post_id, p.title, c.caption, c.url
 From post p left join content c on p.post_id = c.post_id;
 
 -- DELETIONS (Only run if testing functionality)
-DELETE FROM post WHERE post_id = 1;
+-- DELETE FROM post WHERE post_id = 1;
 
