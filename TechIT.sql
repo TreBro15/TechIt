@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS M_MOD_OF_SUB;
 DROP TABLE IF EXISTS MODERATOR;
 DROP TABLE IF EXISTS SUBREDDIT;
 DROP TABLE IF EXISTS USERS;
+DROP VIEW IF EXISTS USER_POST_FEED;
 
 -- USERS
 -- -------------------------------
@@ -789,6 +790,7 @@ Where user_id =
 (SELECT user_id 
 FROM USERS
 WHERE username = 'tech_girl');
+
 -- Posts with multiple tags
 SELECT p.post_id, p.title, group_concat(t.tag) as tags
 FROM POST p NATURAL JOIN TAGS t
@@ -807,8 +809,7 @@ SELECT s.subreddit_name,
 FROM SUBREDDIT s
 LEFT JOIN POST p ON s.subreddit_name = p.subreddit_name
 GROUP BY s.subreddit_name
-ORDER BY total_posts DESC
-LIMIT 5;
+ORDER BY total_posts DESC;
 
 -- Shows unique users who have posted, filtered by karma
 SELECT DISTINCT u.username, u.karma
@@ -818,7 +819,7 @@ WHERE u.karma > 100
 ORDER BY u.karma DESC;
 
 -- Shows posts with or without comments, prioritizing highest score
-SELECT p.post_id, p.title, p.score, c.text
+SELECT p.post_id, p.title, p.score, c.text as comment
 FROM POST p
 LEFT JOIN COMMENT c ON p.post_id = c.post_id
 WHERE p.score > 50
@@ -836,4 +837,9 @@ From post p left join content c on p.post_id = c.post_id;
 
 -- DELETIONS (Only run if testing functionality)
 -- DELETE FROM post WHERE post_id = 1;
+
+-- All comments
+Select * from Admin_Message_Mod;
+
+
 
